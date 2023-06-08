@@ -1,34 +1,45 @@
-import React, { useContext, useState } from "react";
+import React, { useState } from "react";
+import { useContext } from "react";
 import { useForm } from "react-hook-form";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AuthContext } from "../../Contexts/AuthProvider";
+import { toast } from "react-hot-toast";
 
-const Login = () => {
+const SignUp = () => {
   const {
     register,
     formState: { errors },
     handleSubmit,
   } = useForm();
-
-  const [loginError, setLoginError] = useState("");
+  const [signUpError, setSignUpError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/";
 
-  const { signIn, googleSignIn } = useContext(AuthContext);
+  const { createUser, updateUser, googleSignIn } = useContext(AuthContext);
 
-  const handleLogin = (data) => {
-    setLoginError("");
+  const handleSignup = (data) => {
+    setSignUpError("");
     console.log(data);
-    signIn(data.email, data.password)
+    createUser(data.email, data.password)
       .then((result) => {
         const user = result.user;
         console.log(user);
+        toast.success("User create successfully");
+        updateUser(data.name)
+          .then(() => {
+            // Profile updated!
+            // ...
+          })
+          .catch((error) => {
+            // An error occurred
+            // ...
+          });
         navigate(from, { replace: true });
       })
       .catch((err) => {
-        console.log(err.message);
-        setLoginError(err.message);
+        console.log(err);
+        setSignUpError(err.message);
       });
   };
 
@@ -43,10 +54,22 @@ const Login = () => {
         console.log(error);
       });
   };
+
   return (
-    <div className="md:w-[385px]  mx-auto lg:mt-10 p-7 shadow-lg">
-      <h2 className="text-center text-xl mb-9">Login</h2>
-      <form onSubmit={handleSubmit(handleLogin)}>
+    <div className="md:w-[385px]  mx-auto lg:mt-4 p-7 shadow-lg">
+      <h2 className="text-center text-xl mb-9">Sign Up</h2>
+      <form onSubmit={handleSubmit(handleSignup)}>
+        <label className="text-sm pl-1 font-semibold">Name</label>
+        <input
+          type="text"
+          {...register("name", { required: "Name required" })}
+          className="input input-bordered w-full mb-3"
+        />
+        {errors.name && (
+          <p className="text-red-600 font-semibold pl-1 -mt-2 text-sm mb-3">
+            {errors.name?.message}
+          </p>
+        )}
         <label className="text-sm pl-1 font-semibold">Email</label>
         <input
           type="email"
@@ -60,13 +83,13 @@ const Login = () => {
           className="input input-bordered w-full mb-3"
         />
         {errors.email && (
-          <p className="text-red-600 font-semibold pl-1 text-sm -mt-2 mb-3">
+          <p className="text-red-600 font-semibold pl-1 -mt-2 text-sm mb-3">
             {errors.email?.message}
           </p>
         )}
         <label className="text-sm pl-1 font-semibold">Password</label>
         <input
-          type="password"
+          type="text"
           {...register("password", {
             required: "Password required",
             minLength: {
@@ -76,42 +99,38 @@ const Login = () => {
             pattern: {
               value:
                 /^(?=.*?[A-Z])(?=(.*[a-z]){1,})(?=(.*[\d]){1,})(?=(.*[\W]){1,})(?!.*\s).{8,}$/,
-              message: "Password Should Be Strong",
+              message:
+                "Password must have uppercase, number and special characters",
             },
           })}
-          className="input input-bordered w-full "
+          className="input input-bordered w-full mb-1"
         />
         {errors.password && (
-          <p className="text-red-600 font-semibold pl-1 mt-1 text-sm mb-3">
+          <p className="text-red-600 font-semibold pl-1 mt-1 text-sm ">
             {errors.password?.message}
           </p>
         )}
-        <label className="text-xs pl-1 leading-[14px]">Forget Password?</label>
-        <p>{loginError}</p>
-        <button
-          type="submit"
-          className="w-full py-3 bg-accent text-white mt-5 uppercase rounded-md mb-2"
-        >
-          Login
+        <p>{signUpError}</p>
+
+        <button className="w-full py-3 bg-accent text-white mt-5 uppercase rounded-md mb-2">
+          Sign Up
         </button>
         <p className="text-center">
-          New to Doctors Portal?{" "}
-          <Link to="/signup" className="text-secondary">
-            Create new account
+          Already Have an account?{" "}
+          <Link to="/login" className="text-secondary">
+            Login
           </Link>
         </p>
         <div className="divider mt-5">OR</div>
       </form>
-      <div>
-        <button
-          onClick={handleGoogleSignIn}
-          className="w-full py-3 border-2 border-accent text-accent rounded-md mt-2"
-        >
-          CONTINUE WITH GOOGLE
-        </button>
-      </div>
+      <button
+        onClick={handleGoogleSignIn}
+        className="w-full py-3 border-2 border-accent text-accent rounded-md mt-2"
+      >
+        CONTINUE WITH GOOGLE
+      </button>
     </div>
   );
 };
 
-export default Login;
+export default SignUp;
